@@ -327,14 +327,14 @@ function wcbraspress_shipping_load() {
         }
 
         /**
-         * Fix zip code.
+         * Fix number data.
          *
-         * @param  mixed $value Zip code to fix.
+         * @param  string $value Number to fix.
          *
-         * @return int          Fixed zip code.
+         * @return int           Fixed number.
          */
-        private function fix_zipcode( $value ) {
-            $value = str_replace( '-', '', $value );
+        private function fix_number_data( $value ) {
+            $value = str_replace( array( '-', '/', '.', ',', ' ' ), '', $value );
 
             return $value;
         }
@@ -492,7 +492,7 @@ function wcbraspress_shipping_load() {
             $volume = $package_details['quantity'];
             $price = $package_details['price'];
 
-            $zip_destination = $this->fix_zipcode( $package['destination']['postcode'] );
+            $zip_destination = $this->fix_number_data( $package['destination']['postcode'] );
 
             $document_destination = 00000000000; // Change this later!
             $type = null; // Change this later!
