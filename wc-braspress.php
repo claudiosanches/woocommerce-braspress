@@ -277,7 +277,7 @@ function wcbraspress_shipping_load() {
         public function calculate_shipping( $package = array() ) {
             global $woocommerce;
 
-            echo '<pre>' . print_r( $this->get_quotes( $package ) , true ) . '</pre>';
+            echo '<pre>' . print_r( $this->get_quotes( $package ), true ) . '</pre>';
 
             // $rate = array();
 
@@ -344,21 +344,23 @@ function wcbraspress_shipping_load() {
          *
          * @param  array $package Order contents.
          *
-         * @return array          Order total weight and number of items.
+         * @return array          Order total weight, number of items and total price.
          */
         protected function package_details( $package ) {
             $weight = 0;
             $quantity = 0;
+            $price = 0;
 
             foreach ( $package['contents'] as $item_id => $values ) {
                 $product = $values['data'];
                 $product_qty = $values['quantity'];
 
                 if ( $product_qty > 0 && $product->needs_shipping() ) {
-                    $product_weight = woocommerce_get_weight( $this->fix_format( $product->weight ), 'g' );
+                    $product_weight = woocommerce_get_weight( $this->fix_format( $product->get_weight() ), 'g' );
 
                     $weight += $product_weight;
                     $quantity += $product_qty;
+                    $price += ( $product->get_price() * $product_qty );
 
                     if ( $product_qty > 1 ) {
                         for ( $i = 0; $i < $product_qty; $i++ ) {
@@ -374,7 +376,8 @@ function wcbraspress_shipping_load() {
 
             return array(
                 'weight' => $weight,
-                'quantity' => $quantity
+                'quantity' => $quantity,
+                'price' => $price,
             );
         }
 
@@ -410,7 +413,7 @@ function wcbraspress_shipping_load() {
          * @param  [type] $document_destination [description]
          * @param  [type] $type                 [description]
          * @param  [type] $weight               [description]
-         * @param  [type] $nf_value             [description]
+         * @param  [type] $price                [description]
          * @param  [type] $volume               [description]
          *
          * @return [type]                       [description]
@@ -423,7 +426,7 @@ function wcbraspress_shipping_load() {
             $document_destination,
             $type,
             $weight,
-            $nf_value,
+            $price,
             $volume ) {
 
             // Include Braspress classes.
@@ -442,7 +445,7 @@ function wcbraspress_shipping_load() {
                 $request->setDocumentoDestino( $document_destination );
                 $request->setTipoFrete( Braspress::TIPO_FRETE_RODOVIARIO );
                 $request->setPeso( $weight );
-                $request->setValorNF( $nf_value );
+                $request->setValorNF( $price );
                 $request->setVolume( $volume );
 
                 if ( $request->processaConsulta() ) {
@@ -487,12 +490,12 @@ function wcbraspress_shipping_load() {
             $package_details = $this->package_details( $package );
             $order_weight = $package_details['weight'];
             $volume = $package_details['quantity'];
+            $price = $package_details['price'];
 
             $zip_destination = $this->fix_zipcode( $package['destination']['postcode'] );
 
             $document_destination = 00000000000; // Change this later!
             $type = null; // Change this later!
-            $nf_value = 123; // Change this later!
 
             // Checks if the cart is not just virtual products.
             if ( $order_weight > 0 ) {
@@ -506,7 +509,7 @@ function wcbraspress_shipping_load() {
                     $document_destination,
                     $type,
                     $order_weight,
-                    $nf_value,
+                    $price,
                     $volume
                 );
 
